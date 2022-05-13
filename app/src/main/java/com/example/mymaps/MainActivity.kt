@@ -1,92 +1,122 @@
 package com.example.mymaps
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mymaps.models.Place
 import com.example.mymaps.models.UserMap
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-
+import java.io.*
+// Key values for data being passed from parent to child
 const val MAP_LOCATION = "map location"
+const val NEW_MAP_TITLE = "new title"
 const val REQUEST_CODE = "new map"
+
+
 private const val TAG = "MainActivity"
+
+//File where UserMaps are stored
+private const val FILENAME = "usermaps.data"
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var editActivityResultLauncher: ActivityResultLauncher<Intent>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val data = generateData()
+        //Upon startup, maps from data file are read
+        val data = deSerializeUserMaps(this).toMutableList()
+
         val fabNewMap = findViewById<FloatingActionButton>(R.id.fabCreateMap)
-        val rvLocation = findViewById<RecyclerView>(R.id.rvLocations)
-        rvLocation.layoutManager = LinearLayoutManager(this)
-        rvLocation.adapter = MapsAdapter(this, data, object : MapsAdapter.onItemClick{
+        val rvMaps = findViewById<RecyclerView>(R.id.rvLocations)
+        rvMaps.layoutManager = LinearLayoutManager(this)
+
+        val adapter = MapsAdapter(this, data, object : MapsAdapter.OnItemClick {
+            //When rvMaps item is clicked, opens user map in MapScreen activity
             override fun itemClickListener(position: Int) {
-                Log.i(TAG, "Clicked at $position")
                 val i = Intent(this@MainActivity, MapScreen::class.java)
                 i.putExtra(MAP_LOCATION, data[position])
                 startActivity(i)
             }
         })
+        rvMaps.adapter = adapter
         fabNewMap.setOnClickListener {
-            val intent = Intent(this, ResultTest::class.java)
-            editActivityResultLauncher.launch(intent)
+            dialogWindow()
         }
 
-         editActivityResultLauncher = registerForActivityResult(
+        editActivityResultLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
             // If the user comes back to this activity from EditActivity
             // with no error or cancellation
             if (result.resultCode == Activity.RESULT_OK) {
-                val data = result.data
+                val results = result.data
                 // Get the data passed from EditActivity
-                if (data != null) {
-                    val editedString = data.extras!!.getSerializable("newString") as UserMap
-                    Log.i(TAG, editedString.title)
+                if (results != null) {
+                    val newMap = results.extras!!.getSerializable(REQUEST_CODE) as UserMap
+                    Log.i(TAG, "${newMap.title}, ${newMap.places[0].name}")
+                    data.add(newMap)
+                    adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
+                    serializeUserMaps(this, data) //save new data to file
                 }
             }
         }
+    }
 
-        fun startEditActivity() {
+    // Function is used when any new data is created
+    private fun serializeUserMaps(context: Context, data: MutableList<UserMap>) {
+        ObjectOutputStream(FileOutputStream(getDataFile(context))).use { it.writeObject(data) }
+    }
 
+    // Function is used when saved data is read
+    private fun deSerializeUserMaps(context: Context): List<UserMap> {
+        val datafile = getDataFile(context)
+        if (!datafile.exists()) {
+            return emptyList()
+        }
+        ObjectInputStream(FileInputStream(datafile)).use {
+            return it.readObject() as List<UserMap>
         }
     }
 
-    private fun generateData() : List<UserMap>{
-        val list = mutableListOf<UserMap>()
-        list.add(UserMap("Favorite places in Monroe", listOf(
-                Place("Cookout",
-                    "Fast-Food Joint",
-                    35.0,-80.5),
-                Place("Monroe Aquatic Center",
-                "Fun place to swim and play",
-                    35.009107258692595, -80.5657304840066),
-                Place("CATA",
-                    "Where I went to school",
-                    34.97316186116537, -80.56763576487599),
-                Place("My Home",
-                    "Where I grew up",
-                    35.03906690180318, -80.37885118782752))))
-        list.add(
-            UserMap("College Hangout Spots", listOf(
-                Place("Norton",
-                    "My Dorm",
-                    35.31431034535912, -83.1852156889667),
-                Place("Live Forgiven Church",
-                "Where I went to Church",
-                    35.33200042434107, -83.19878991907268),
-                Place("Walmart",
-                "Where we shopped for groceries",
-                    35.361733114874355, -83.20457890908)
-            )))
-        return list
+    private fun getDataFile(context: Context): File {
+        return File(context.filesDir, FILENAME)
+    }
+
+    /** The following method is called when fabNewMap is pressed
+     * A dialog window will appear and allow the user to enter a new map name
+     * Once a valid name is entered, app will enter NewMaps activity**/
+    private fun dialogWindow() {
+        val newMapTitle = LayoutInflater.from(this).inflate(R.layout.new_map_title, null)
+        var title: String
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Create a New Map")
+            .setView(newMapTitle)
+            .setPositiveButton("Ok", null)
+            .setNegativeButton("Cancel", null)
+            .show()
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+            title = newMapTitle.findViewById<EditText>(R.id.etMapName).text.toString()
+            if (title.trim().isNotEmpty()) {
+                val intent = Intent(this, NewMaps::class.java)
+                intent.putExtra(NEW_MAP_TITLE, title)
+                editActivityResultLauncher.launch(intent)
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Title is Required", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

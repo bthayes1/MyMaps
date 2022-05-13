@@ -6,4 +6,8 @@
     <string name="title_activity_new_maps">NewMaps</string>
     <string name="submit">SUBMIT</string>
     <string name="enter_data_here">Enter Data Here</string>
+    <string name="enter_title_of_place">Enter Title of Place</string>
+    <string name="enter_description">Enter Description</string>
+    <string name="save">Save</string>
+    <string name="enter_map_name">Enter Map Name</string>
 </resources>

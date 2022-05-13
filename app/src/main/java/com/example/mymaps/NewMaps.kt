@@ -1,7 +1,18 @@
 package com.example.mymaps
 
+import android.app.AlertDialog
+import android.app.Dialog
+import android.content.DialogInterface
+import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.EditText
+import android.widget.Toast
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -10,23 +21,38 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.example.mymaps.databinding.ActivityNewMapsBinding
+import com.example.mymaps.models.Place
+import com.example.mymaps.models.UserMap
+import com.google.android.gms.maps.model.Marker
+import com.google.android.material.snackbar.Snackbar
+
+private const val TAG = "NewMaps"
 
 class NewMaps : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
+    private var markers : MutableList<Marker> = mutableListOf()
     private lateinit var binding: ActivityNewMapsBinding
+    private lateinit var newTitle : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityNewMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        supportActionBar?.title = ""
+        newTitle = intent.getStringExtra(NEW_MAP_TITLE).toString()
+        supportActionBar?.title = newTitle
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+        mapFragment.view?.let {
+            Snackbar.make(it, "Long Click to add marker", Snackbar.LENGTH_INDEFINITE)
+                .setAction("Ok",{})
+                .setActionTextColor(Color.WHITE)
+                .show()
+        }
     }
 
 
@@ -34,18 +60,80 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
+     * To delete a placed marker, tap the infowindow of the marker
+     * A long click will add a new marker and prompt the user to populate title and description
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        mMap.setOnInfoWindowClickListener { markerToDelete ->
+            markerToDelete.remove()
+            markers.remove(markerToDelete)
+        }
+        
+        mMap.setOnMapLongClickListener { LatLng ->
+            dialogWindow(LatLng)
+        }
         // Add a marker in Sydney and move the camera
         val sydney = LatLng(-34.0, 151.0)
         mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+    }
+
+    private fun dialogWindow(latLng: LatLng) {
+        val newLocView = LayoutInflater.from(this).inflate(R.layout.new_marker_view, null)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Create a Marker")
+            .setView(newLocView)
+            .setPositiveButton("Ok", null)
+            .setNegativeButton("Cancel", null)
+            .show()
+
+
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+            val title = newLocView.findViewById<EditText>(R.id.etTitle).text.toString()
+            val description = newLocView.findViewById<EditText>(R.id.etDescription).text.toString()
+            if (title.trim().isNotEmpty() && description.trim().isNotEmpty()) {
+                val marker = mMap.addMarker(
+                    MarkerOptions().position(latLng).title(title).snippet(description))
+                if (marker != null) {
+                    markers.add(marker)
+                    dialog.dismiss()
+                }
+            }
+            else{
+                Toast.makeText(this, "Title and Description are Required", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    /**Add the save button to the status bar*/
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_create_map, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    /**Add the save button to the status bar
+     * If a place has been added, the save button can be pressed
+     * Once save button is pressed, app will return to MainActivity*/
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.miSave){
+            if (markers.isEmpty()){
+                Toast.makeText(this, "No data has been added", Toast.LENGTH_SHORT).show()
+                return true
+            }
+            val places = markers.map{marker -> Place(marker.title.toString(),
+                marker.snippet.toString(),
+                marker.position.latitude,
+                marker.position.longitude)}
+
+            val newMap = UserMap(newTitle, places)
+            val intent = Intent()
+            intent.putExtra(REQUEST_CODE, newMap)
+            // Activity finished ok, return the data
+            setResult(RESULT_OK, intent) // set result code and bundle data for response
+            finish()
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

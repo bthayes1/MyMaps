@@ -1,7 +1,6 @@
 package com.example.mymaps
 
 import android.content.Context
-import android.content.DialogInterface
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,9 +11,9 @@ import com.example.mymaps.models.UserMap
 
 private const val TAG = "MapsAdapter"
 
-class MapsAdapter(val context: Context, val data : List<UserMap>, val onClickListener: onItemClick) : RecyclerView.Adapter<MapsAdapter.ViewHolder>() {
+class MapsAdapter(private val context: Context, private val data : List<UserMap>, private val onClickListener: OnItemClick) : RecyclerView.Adapter<MapsAdapter.ViewHolder>() {
 
-    interface onItemClick{
+    interface OnItemClick{
         fun itemClickListener(position: Int)
     }
 
@@ -33,7 +32,7 @@ class MapsAdapter(val context: Context, val data : List<UserMap>, val onClickLis
     override fun getItemCount() = data.size
 
     inner class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView) {
-        val tvLocation = itemView.findViewById<TextView>(R.id.tvPlace)
+        private val tvLocation: TextView = itemView.findViewById(R.id.tvPlace)
         fun bind(item : UserMap){
             Log.i(TAG, item.title)
             tvLocation.text = item.title
