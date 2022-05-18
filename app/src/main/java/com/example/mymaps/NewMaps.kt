@@ -1,10 +1,10 @@
 package com.example.mymaps
 
 import android.app.AlertDialog
-import android.app.Dialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Color
+import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.material.snackbar.Snackbar
 
 private const val TAG = "NewMaps"
+private const val DEFAULT_ZOOM = 12f
 
 class NewMaps : AppCompatActivity(), OnMapReadyCallback {
 
@@ -34,6 +35,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
     private var markers : MutableList<Marker> = mutableListOf()
     private lateinit var binding: ActivityNewMapsBinding
     private lateinit var newTitle : String
+    private lateinit var location : Location
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +43,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityNewMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         newTitle = intent.getStringExtra(NEW_MAP_TITLE).toString()
+        location = intent.getParcelableExtra(LOCATION_KEY)!!
         supportActionBar?.title = newTitle
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -75,9 +78,9 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
             dialogWindow(LatLng)
         }
         // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        val current = LatLng(location.latitude, location.longitude)
+        mMap.addMarker(MarkerOptions().position(current).title("Marker in Sydney"))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_ZOOM))
     }
 
     private fun dialogWindow(latLng: LatLng) {
@@ -131,6 +134,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
             val intent = Intent()
             intent.putExtra(REQUEST_CODE, newMap)
             // Activity finished ok, return the data
+            Log.i(TAG, "New Map saved: ${newMap.title}")
             setResult(RESULT_OK, intent) // set result code and bundle data for response
             finish()
         }

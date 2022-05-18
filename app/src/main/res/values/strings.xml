@@ -10,4 +10,6 @@
     <string name="enter_description">Enter Description</string>
     <string name="save">Save</string>
     <string name="enter_map_name">Enter Map Name</string>
+    <string name="InfoText">When Location is enabled, the map will automatically center on the user, otherwise the map will go to default location. If you would like to change location permissions in the future, you can do so through your settings.</string>
+
 </resources>
