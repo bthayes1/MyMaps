@@ -45,12 +45,29 @@ class MapScreen : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         val builder = LatLngBounds.Builder()
-        for (place in myMap.places){
-            Log.i(TAG, "The latitude is ${place.latitude}, longitude is: ${place.longitude}")
+        if (myMap.places.size == 1){
+            val place = myMap.places[0]
             val latLng = LatLng(place.latitude, place.longitude)
-            builder.include(latLng)
             mMap.addMarker(MarkerOptions().position(latLng).title(place.name).snippet(place.description))
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM))
         }
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 1000, 1000, 75))
+        else {
+            for (place in myMap.places) {
+                Log.i(TAG, "The latitude is ${place.latitude}, longitude is: ${place.longitude}")
+                val latLng = LatLng(place.latitude, place.longitude)
+                builder.include(latLng)
+                mMap.addMarker(
+                    MarkerOptions().position(latLng).title(place.name).snippet(place.description)
+                )
+                mMap.moveCamera(
+                    CameraUpdateFactory.newLatLngBounds(
+                        builder.build(),
+                        1000,
+                        1000,
+                        75
+                    )
+                )
+            }
+        }
     }
 }

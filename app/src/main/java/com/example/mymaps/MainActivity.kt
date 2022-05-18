@@ -220,7 +220,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, NewMaps::class.java)
         intent.putExtra(LOCATION_KEY, location)
         intent.putExtra(NEW_MAP_TITLE, mapTitle)
-        startActivity(intent)
+        editActivityResultLauncher.launch(intent)
     }
 
 }

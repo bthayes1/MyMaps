@@ -27,7 +27,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.material.snackbar.Snackbar
 
 private const val TAG = "NewMaps"
-private const val DEFAULT_ZOOM = 12f
+const val DEFAULT_ZOOM = 13f
 
 class NewMaps : AppCompatActivity(), OnMapReadyCallback {
 
