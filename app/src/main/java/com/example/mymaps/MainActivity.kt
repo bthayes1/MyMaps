@@ -8,23 +8,28 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymaps.models.UserMap
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
 import java.io.*
 // Key values for data being passed from parent to child
 const val MAP_LOCATION = "map location"
@@ -48,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mapTitle : String
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -56,6 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         val fabNewMap = findViewById<FloatingActionButton>(R.id.fabCreateMap)
         val rvMaps = findViewById<RecyclerView>(R.id.rvLocations)
+        val constraintLayout = findViewById<ConstraintLayout>(R.id.constraintLayout)
         rvMaps.layoutManager = LinearLayoutManager(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -91,7 +98,38 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        val swipeToDelete = object : SwipeToDelete(){
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                val currentData = data[position]
+                Log.i(TAG, "Item swiped at position: $position")
+                data.removeAt(position)
+                adapter.notifyItemRemoved(position)
+                serializeUserMaps(this@MainActivity, data)
+                Snackbar.make(constraintLayout, "Item was deleted", Snackbar.LENGTH_LONG)
+                    .setAction("Undo", UndoListener(position, currentData))
+                    .setActionTextColor(Color.WHITE)
+                    .show()
+            }
+
+            inner class UndoListener(private val position: Int, private val deletedItem: UserMap) :
+                View.OnClickListener{
+
+                override fun onClick(p0: View?) {
+                    data.add(position, deletedItem)
+                    adapter.notifyItemInserted(position)
+                    serializeUserMaps(this@MainActivity, data)
+                    Log.i(TAG, "onClick: Undo was pressed. Data was added at position: $position")
+                }
+            }
+        }
+
+        val itemTouchHelper = ItemTouchHelper(swipeToDelete)
+        itemTouchHelper.attachToRecyclerView(rvMaps)
+
     }
+
+
 
     // Function is used when any new data is created
     private fun serializeUserMaps(context: Context, data: MutableList<UserMap>) {
