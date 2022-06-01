@@ -79,7 +79,6 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
         }
         // Add a marker in Sydney and move the camera
         val current = LatLng(location.latitude, location.longitude)
-        mMap.addMarker(MarkerOptions().position(current).title("Marker in Sydney"))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_ZOOM))
     }
 

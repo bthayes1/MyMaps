@@ -1,5 +1,6 @@
 package com.example.mymaps
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
@@ -33,9 +34,12 @@ class MapsAdapter(private val context: Context, private val data : List<UserMap>
 
     inner class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView) {
         private val tvLocation: TextView = itemView.findViewById(R.id.tvPlace)
+        private val tvPlaces : TextView = itemView.findViewById(R.id.tvNumPlaces)
+        @SuppressLint("SetTextI18n")
         fun bind(item : UserMap){
             Log.i(TAG, item.title)
             tvLocation.text = item.title
+            tvPlaces.text = "${item.places.size} places"
         }
     }
 

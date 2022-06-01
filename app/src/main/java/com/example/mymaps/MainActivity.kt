@@ -86,9 +86,7 @@ class MainActivity : AppCompatActivity() {
                     val newMap = results.extras!!.getSerializable(REQUEST_CODE) as UserMap
                     Log.i(TAG, "${newMap.title}, ${newMap.places[0].name}")
                     data.add(newMap)
-//                    data.removeAt(0)
                     adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
-//                    adapter.notifyItemRemoved(0)
                     serializeUserMaps(this, data) //save new data to file
                 }
             }
