@@ -4,7 +4,14 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/MyMaps/app/src/main/res/layout/activity_main.xml" value="0.36666666666666664" />
-        <entry key="..\:/MyMaps/app/src/main/res/layout/place_item.xml" value="0.36666666666666664" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/activity_map_screen.xml" value="0.36666666666666664" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/activity_new_maps.xml" value="0.1962962962962963" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/activity_result_test.xml" value="0.1962962962962963" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/infoview.xml" value="0.30185185185185187" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/new_map_title.xml" value="0.18796296296296297" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/new_marker_view.xml" value="0.3625" />
+        <entry key="..\:/MyMaps/app/src/main/res/layout/place_item.xml" value="0.3241025641025641" />
+        <entry key="..\:/MyMaps/app/src/main/res/menu/menu_create_map.xml" value="0.3625" />
       </map>
     </option>
   </component>

@@ -1,4 +1,20 @@
 <resources>
     <string name="app_name">My Maps</string>
     <string name="my_favorite_place">My Favorite Place</string>
+    <string name="title_activity_map_screen">MapScreen</string>
+    <string name="button_to_add_map">Button to add map</string>
+    <string name="title_activity_new_maps">NewMaps</string>
+    <string name="submit">SUBMIT</string>
+    <string name="enter_data_here">Enter Data Here</string>
+    <string name="enter_title_of_place">Enter Title of Place</string>
+    <string name="enter_description">Enter Description</string>
+    <string name="save">Save</string>
+    <string name="enter_map_name">Enter Map Name</string>
+    <string name="InfoText">When Location is enabled, the map will automatically center on the user, otherwise the map will go to default location. If you would like to change location permissions in the future, you can do so through your settings.</string>
+    <string name="_4_places">4 places</string>
+    <string name="delete_map">Delete Map</string>
+    <string name="edit_map">Edit Map</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+
 </resources>
