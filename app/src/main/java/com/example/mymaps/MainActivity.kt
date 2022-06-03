@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity() {
     private fun dialogWindow(isEdit : Boolean, position: Int){
         val newMapTitle = LayoutInflater.from(this).inflate(R.layout.new_map_title, null)
         val dialog = AlertDialog.Builder(this)
-            .setTitle("Create a New Map")
+            .setTitle("Enter Map Title")
             .setView(newMapTitle)
             .setPositiveButton("Ok", null)
             .setNegativeButton("Cancel", null)

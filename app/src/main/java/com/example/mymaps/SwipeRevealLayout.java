@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,7 +26,10 @@ import androidx.customview.widget.ViewDragHelper;
  */
 
 @SuppressLint("RtlHardcoded")
+
+
 public class SwipeRevealLayout extends ViewGroup {
+    private static final String TAG = "SwipeRevealLayout";
 
     private static final String SUPER_INSTANCE_STATE = "saved_instance_state_parcelable";
 
@@ -346,9 +350,14 @@ public class SwipeRevealLayout extends ViewGroup {
     public void open(boolean animation) {
         mIsOpenBeforeInit = true;
 
+        Log.i(TAG, "open: View open");
+
         if (animation) {
             mDragHelper.smoothSlideViewTo(mMainView, mRectMainOpen.left, mRectMainOpen.top);
-        } else {
+            Runnable r = () -> close(true);
+            postDelayed(r, 3000); // Closes panel after 3 seconds
+        }
+           else {
             mDragHelper.abort();
 
             mMainView.layout(
@@ -365,7 +374,6 @@ public class SwipeRevealLayout extends ViewGroup {
                     mRectSecOpen.bottom
             );
         }
-
         ViewCompat.postInvalidateOnAnimation(this);
     }
 
@@ -373,6 +381,7 @@ public class SwipeRevealLayout extends ViewGroup {
      * Close the panel to hide the secondary view
      */
     public void close(boolean animation) {
+        Log.i(TAG, "close: View closed.");
         mIsOpenBeforeInit = false;
 
         if (animation) {
