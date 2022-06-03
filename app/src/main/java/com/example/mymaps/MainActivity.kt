@@ -10,19 +10,17 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymaps.models.UserMap
@@ -31,6 +29,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import java.io.*
+
 // Key values for data being passed from parent to child
 const val MAP_LOCATION = "map location"
 const val NEW_MAP_TITLE = "new title"
@@ -52,41 +51,42 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editActivityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mapTitle : String
+    private lateinit var data : MutableList<UserMap>
+    private lateinit var adapter: MapsAdapter
+    private lateinit var rvMaps: RecyclerView
+    private lateinit var fabNewMap: FloatingActionButton
+    private lateinit var constraintLayout : ConstraintLayout
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         //Upon startup, maps from data file are read
-        val data = deSerializeUserMaps(this).toMutableList()
+        data = deSerializeUserMaps(this).toMutableList()
 
-        val fabNewMap = findViewById<FloatingActionButton>(R.id.fabCreateMap)
-        val rvMaps = findViewById<RecyclerView>(R.id.rvLocations)
-        val constraintLayout = findViewById<ConstraintLayout>(R.id.constraintLayout)
+        initViews()
+
         rvMaps.layoutManager = LinearLayoutManager(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        setupAdapter()
+        fabNewMap.setOnClickListener { dialogWindow(false, 0) }
+        newMapsLauncher()
+    }
 
+    private fun initViews() {
+        fabNewMap = findViewById(R.id.fabCreateMap)
+        rvMaps = findViewById(R.id.rvLocations)
+        constraintLayout = findViewById(R.id.constraintLayout)
+    }
 
-        val adapter = MapsAdapter(this, data, object : MapsAdapter.OnItemClick {
-            //When rvMaps item is clicked, opens user map in MapScreen activity
-            override fun itemClickListener(position: Int) {
-                val i = Intent(this@MainActivity, MapScreen::class.java)
-                i.putExtra(MAP_LOCATION, data[position])
-                startActivity(i)
-            }
-        })
-        rvMaps.adapter = adapter
-        fabNewMap.setOnClickListener {
-            dialogWindow()
-        }
-
+    private fun newMapsLauncher() {
         editActivityResultLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
-            // If the user comes back to this activity from EditActivity
-            // with no error or cancellation
-            Log.i(TAG, "Returning fror NewMaps.kt")
             if (result.resultCode == Activity.RESULT_OK) {
+                // If the user comes back to this activity from EditActivity
+                // with no error or cancellation
                 val results = result.data
                 // Get the data passed from EditActivity
                 if (results != null) {
@@ -98,38 +98,46 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        val swipeToDelete = object : SwipeToDelete(){
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.bindingAdapterPosition
-                val currentData = data[position]
-                Log.i(TAG, "Item swiped at position: $position")
-                data.removeAt(position)
-                adapter.notifyItemRemoved(position)
-                serializeUserMaps(this@MainActivity, data)
-                Snackbar.make(constraintLayout, "Item was deleted", Snackbar.LENGTH_LONG)
-                    .setAction("Undo", UndoListener(position, currentData))
-                    .setActionTextColor(Color.WHITE)
-                    .show()
-            }
-
-            inner class UndoListener(private val position: Int, private val deletedItem: UserMap) :
-                View.OnClickListener{
-
-                override fun onClick(p0: View?) {
-                    data.add(position, deletedItem)
-                    adapter.notifyItemInserted(position)
-                    serializeUserMaps(this@MainActivity, data)
-                    Log.i(TAG, "onClick: Undo was pressed. Data was added at position: $position")
-                }
-            }
-        }
-
-        val itemTouchHelper = ItemTouchHelper(swipeToDelete)
-        itemTouchHelper.attachToRecyclerView(rvMaps)
-
     }
 
+    private fun setupAdapter() {
+        adapter = MapsAdapter(this, data, object : MapsAdapter.OnItemClick {
+            //When rvMaps item is clicked, opens user map in MapScreen activity
+            override fun itemClickListener(position: Int) {
+                val i = Intent(this@MainActivity, MapScreen::class.java)
+                i.putExtra(MAP_LOCATION, data[position])
+                startActivity(i)
+            }
+        }, object : MapsAdapter.OnEditClick {
+            override fun editClickListener(position: Int) {
+                Log.i(TAG, "Edit Clicked")
+                dialogWindow(true, position)
+            }
+        }, object : MapsAdapter.OnDeleteClick{
+            override fun deleteClickListener(position: Int) {
+                deleteMap(position)
+                // Need to persist data and add undo function
+            }
+        })
+        rvMaps.adapter = adapter
+    }
 
+    private fun deleteMap(position: Int) {
+        // delete data
+        val deletedData = data[position] // saves the data that is deleted in variable
+        data.removeAt(position)
+        adapter.notifyItemRemoved(position)
+        serializeUserMaps(this, data)
+        // Create snackbar to allow user to restore data
+        Snackbar.make(constraintLayout, "Item was deleted", Snackbar.LENGTH_LONG)
+            .setAction("Undo") {
+                data.add(position, deletedData)
+                adapter.notifyItemInserted(position)
+                Log.i(TAG, "onClick: Undo was pressed. Data was added at position: $position")
+            }
+            .setActionTextColor(Color.WHITE)
+            .show()
+    }
 
     // Function is used when any new data is created
     private fun serializeUserMaps(context: Context, data: MutableList<UserMap>) {
@@ -154,7 +162,7 @@ class MainActivity : AppCompatActivity() {
     /** The following method is called when fabNewMap is pressed
      * A dialog window will appear and allow the user to enter a new map name
      * Once a valid name is entered, app will enter NewMaps activity**/
-    private fun dialogWindow() {
+    private fun dialogWindow(isEdit : Boolean, position: Int){
         val newMapTitle = LayoutInflater.from(this).inflate(R.layout.new_map_title, null)
         val dialog = AlertDialog.Builder(this)
             .setTitle("Create a New Map")
@@ -162,11 +170,22 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Ok", null)
             .setNegativeButton("Cancel", null)
             .show()
+        Log.i(TAG, "Here")
+
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
             mapTitle = newMapTitle.findViewById<EditText>(R.id.etMapName).text.toString()
             if (mapTitle.trim().isNotEmpty()) {
+                when (isEdit){
+                    true -> {
+                        data[position] = UserMap(mapTitle, data[position].places)
+                        Log.i(TAG, data[position].title)
+                        adapter.notifyItemChanged(position)
+                    }
+                    else -> requestPermission()
+                }
                 dialog.dismiss()
-                requestPermission()
+//                requestPermission()
+
             } else {
                 Toast.makeText(this, "Title is Required", Toast.LENGTH_SHORT).show()
             }

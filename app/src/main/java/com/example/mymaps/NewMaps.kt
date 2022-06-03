@@ -51,8 +51,8 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
         mapFragment.view?.let {
-            Snackbar.make(it, "Long Click to add marker", Snackbar.LENGTH_INDEFINITE)
-                .setAction("Ok",{})
+            Snackbar.make(it, "Long Click to add marker", Snackbar.LENGTH_LONG)
+                .setAction("Ok") {}
                 .setActionTextColor(Color.WHITE)
                 .show()
         }
