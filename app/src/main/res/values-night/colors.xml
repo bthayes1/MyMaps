@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand color. -->
+    <color name="mid">#EAEAEA</color>
+    <!-- Primary brand color. -->
+    <color name="light">#A2A2A2</color>
+    <!-- Primary brand color. -->
+    <color name="darker">#6F6F6F</color>
+    <color name="textcolor">#FFFFFFFF</color>
+    <!-- Light Mode Status Bar -->
+    <color name="white">#FFFFFFFF</color>    <!-- Primary brand color. -->
+    <color name="black" >#000000</color>
+    <color name="fabOutline">#EAEAEA </color>
+
+
+</resources>

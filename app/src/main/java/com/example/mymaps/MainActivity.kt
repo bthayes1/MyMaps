@@ -36,6 +36,7 @@ const val NEW_MAP_TITLE = "new title"
 const val REQUEST_CODE = "new map"
 
 const val LOCATION_KEY = "location" // Key for extras passed into MapActivity.kt
+
 // Default location if location permission is denied.
 private const val DEFAULT_LOCATION_PROVIDER = "default"
 private const val DEFAULT_LATITUDE = 45.0
@@ -107,6 +108,7 @@ class MainActivity : AppCompatActivity() {
                 val i = Intent(this@MainActivity, MapScreen::class.java)
                 i.putExtra(MAP_LOCATION, data[position])
                 startActivity(i)
+                activityTransition()
             }
         }, object : MapsAdapter.OnEditClick {
             override fun editClickListener(position: Int) {
@@ -135,7 +137,6 @@ class MainActivity : AppCompatActivity() {
                 adapter.notifyItemInserted(position)
                 Log.i(TAG, "onClick: Undo was pressed. Data was added at position: $position")
             }
-            .setActionTextColor(Color.WHITE)
             .show()
     }
 
@@ -170,9 +171,11 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Ok", null)
             .setNegativeButton("Cancel", null)
             .show()
-        Log.i(TAG, "Here")
-
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+        val btnPositive = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+        val btnNegative = dialog.getButton(DialogInterface.BUTTON_NEGATIVE)
+        btnPositive.setTextColor(ContextCompat.getColor(this, R.color.textcolor))
+        btnNegative.setTextColor(ContextCompat.getColor(this, R.color.textcolor))
+        btnPositive.setOnClickListener {
             mapTitle = newMapTitle.findViewById<EditText>(R.id.etMapName).text.toString()
             if (mapTitle.trim().isNotEmpty()) {
                 when (isEdit){
@@ -184,8 +187,6 @@ class MainActivity : AppCompatActivity() {
                     else -> requestPermission()
                 }
                 dialog.dismiss()
-//                requestPermission()
-
             } else {
                 Toast.makeText(this, "Title is Required", Toast.LENGTH_SHORT).show()
             }
@@ -276,6 +277,11 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra(LOCATION_KEY, location)
         intent.putExtra(NEW_MAP_TITLE, mapTitle)
         editActivityResultLauncher.launch(intent)
+        activityTransition()
+    }
+
+    private fun activityTransition(){
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }
 
 }

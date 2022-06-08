@@ -13,6 +13,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -53,7 +54,8 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.view?.let {
             Snackbar.make(it, "Long Click to add marker", Snackbar.LENGTH_LONG)
                 .setAction("Ok") {}
-                .setActionTextColor(Color.WHITE)
+                .setActionTextColor(ContextCompat.getColor(this, R.color.light))
+                .setBackgroundTint(ContextCompat.getColor(this, R.color.darker))
                 .show()
         }
     }
@@ -91,8 +93,9 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
             .setNegativeButton("Cancel", null)
             .show()
 
-
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+        val btnPostive = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+        btnPostive.setTextColor(ContextCompat.getColor(this, R.color.textcolor))
+        btnPostive.setOnClickListener {
             val title = newLocView.findViewById<EditText>(R.id.etTitle).text.toString()
             val description = newLocView.findViewById<EditText>(R.id.etDescription).text.toString()
             if (title.trim().isNotEmpty() && description.trim().isNotEmpty()) {

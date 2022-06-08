@@ -52,6 +52,7 @@
             app:cardElevation="5dp"
             app:cardCornerRadius="8dp"
             android:layout_margin="5dp"
+            app:cardBackgroundColor="@color/darker"
             android:visibility="visible">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -66,6 +67,7 @@
                     android:gravity="center_vertical"
                     android:textSize="20sp"
                     android:fontFamily="sans-serif-smallcaps"
+                    android:textColor="@color/white"
                     android:text="@string/my_favorite_place"
                     android:paddingStart="16dp"
                     app:layout_constraintStart_toStartOf="parent"/>
@@ -78,6 +80,7 @@
                     android:gravity="center_vertical"
                     android:text="@string/_4_places"
                     android:textSize="20sp"
+                    android:textColor="@color/white"
                     app:layout_constraintStart_toEndOf="@id/tvPlace"
                     app:layout_constraintEnd_toEndOf="parent"
                     />
