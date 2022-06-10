@@ -7,14 +7,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
     <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/rvLocations"
-        />
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreateMap"
@@ -26,9 +27,21 @@
         android:clickable="true"
         android:contentDescription="@string/button_to_add_map"
         android:focusable="true"
-        app:tint="@color/fabOutline"
+        app:backgroundTint="#00C33636"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:tint="@color/fabOutline" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/swDisplayToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="20dp"
+        android:text="Night Mode?"
+        tools:layout_editor_absoluteX="42dp"
+        tools:layout_editor_absoluteY="600dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

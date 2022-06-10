@@ -2,8 +2,11 @@ package com.example.mymaps
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActionBar
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.UiModeManager.MODE_NIGHT_NO
+import android.app.UiModeManager.MODE_NIGHT_YES
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -14,10 +17,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SwitchCompat
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -49,6 +55,7 @@ private const val FILENAME = "usermaps.data"
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var swToggle: SwitchCompat
     private lateinit var editActivityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mapTitle : String
@@ -60,14 +67,29 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    @SuppressLint("UseSupportActionBar")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar?.displayOptions = androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM
+        supportActionBar?.setCustomView(R.layout.custom_toolbar)
         //Upon startup, maps from data file are read
         data = deSerializeUserMaps(this).toMutableList()
 
         initViews()
-
+        
+        swToggle.setOnClickListener{
+            when(swToggle.isChecked){
+                true -> {
+                    Log.i(TAG, "Night mode on")
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                }
+                false -> {
+                    Log.i(TAG, "Night mode off")
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                }
+            }
+        }
         rvMaps.layoutManager = LinearLayoutManager(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupAdapter()
@@ -79,6 +101,7 @@ class MainActivity : AppCompatActivity() {
         fabNewMap = findViewById(R.id.fabCreateMap)
         rvMaps = findViewById(R.id.rvLocations)
         constraintLayout = findViewById(R.id.constraintLayout)
+        swToggle = findViewById(R.id.swDisplayToggle)
     }
 
     private fun newMapsLauncher() {
@@ -94,6 +117,7 @@ class MainActivity : AppCompatActivity() {
                     val newMap = results.extras!!.getSerializable(REQUEST_CODE) as UserMap
                     Log.i(TAG, "${newMap.title}, ${newMap.places[0].name}")
                     data.add(newMap)
+                    Log.i(TAG, "Data Size: ${data.size}")
                     adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
                     serializeUserMaps(this, data) //save new data to file
                 }
@@ -277,7 +301,7 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra(LOCATION_KEY, location)
         intent.putExtra(NEW_MAP_TITLE, mapTitle)
         editActivityResultLauncher.launch(intent)
-        activityTransition()
+        //activityTransition()
     }
 
     private fun activityTransition(){

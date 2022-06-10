@@ -8,10 +8,11 @@
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/darker</item>
         <item name="colorSecondaryVariant">@color/white</item>
-        <item name="colorOnSecondary">@color/textcolor</item>
+        <item name="colorOnSecondary">@color/darker</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" >?attr/colorPrimary</item>
         <item name="android:windowLightStatusBar" tools:ignore="NewApi">true</item>
+        <item name="android:colorAccent">@color/darker</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>
