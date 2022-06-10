@@ -2,22 +2,17 @@ package com.example.mymaps
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.ActionBar
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.UiModeManager.MODE_NIGHT_NO
-import android.app.UiModeManager.MODE_NIGHT_YES
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,9 +32,10 @@ import com.google.android.material.snackbar.Snackbar
 import java.io.*
 
 // Key values for data being passed from parent to child
-const val MAP_LOCATION = "map location"
+const val USER_MAP_KEY = "map location"
 const val NEW_MAP_TITLE = "new title"
 const val REQUEST_CODE = "new map"
+const val IS_NEW_MAP = "isNewMap"
 
 const val LOCATION_KEY = "location" // Key for extras passed into MapActivity.kt
 
@@ -126,40 +122,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupAdapter() {
-        adapter = MapsAdapter(this, data, object : MapsAdapter.OnItemClick {
+        adapter = MapsAdapter(this, data,
+            object : MapsAdapter.OnItemClick {
             //When rvMaps item is clicked, opens user map in MapScreen activity
             override fun itemClickListener(position: Int) {
-                val i = Intent(this@MainActivity, MapScreen::class.java)
-                i.putExtra(MAP_LOCATION, data[position])
-                startActivity(i)
-                activityTransition()
+                startMap(null, false, data[position])
             }
-        }, object : MapsAdapter.OnEditClick {
+        },
+            object : MapsAdapter.OnEditClick {
             override fun editClickListener(position: Int) {
-                Log.i(TAG, "Edit Clicked")
                 dialogWindow(true, position)
             }
-        }, object : MapsAdapter.OnDeleteClick{
+        },
+            object : MapsAdapter.OnDeleteClick{
             override fun deleteClickListener(position: Int) {
                 deleteMap(position)
-                // Need to persist data and add undo function
             }
         })
         rvMaps.adapter = adapter
     }
 
     private fun deleteMap(position: Int) {
-        // delete data
         val deletedData = data[position] // saves the data that is deleted in variable
         data.removeAt(position)
         adapter.notifyItemRemoved(position)
+        adapter.notifyItemRangeChanged(position,data.size)
         serializeUserMaps(this, data)
-        // Create snackbar to allow user to restore data
+         //Create snackbar to allow user to restore data
         Snackbar.make(constraintLayout, "Item was deleted", Snackbar.LENGTH_LONG)
             .setAction("Undo") {
                 data.add(position, deletedData)
                 adapter.notifyItemInserted(position)
-                Log.i(TAG, "onClick: Undo was pressed. Data was added at position: $position")
+                adapter.notifyItemRangeChanged(position,data.size-1)
+                serializeUserMaps(this, data)
             }
             .show()
     }
@@ -236,7 +231,7 @@ class MainActivity : AppCompatActivity() {
                             Toast.makeText(this, "Location not Found", Toast.LENGTH_SHORT).show()
                         }
                         else -> {
-                            startMap(location.result)
+                            startMap(location.result, true, UserMap(mapTitle, emptyList()))
                         }
                     }
                 }
@@ -246,7 +241,7 @@ class MainActivity : AppCompatActivity() {
                 val defaultLoc = Location(DEFAULT_LOCATION_PROVIDER)
                 defaultLoc.latitude = DEFAULT_LATITUDE
                 defaultLoc.longitude = DEFAULT_LONGITUDE
-                startMap(defaultLoc)
+                startMap(defaultLoc, true, UserMap(mapTitle, emptyList()))
             }
         }
 
@@ -294,12 +289,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startMap(location: Location){
-        // Will navigate to map activity either with default coordinates, or current coordinates.
-        Log.i(TAG, "StartMap: ${location.latitude}, ${location.longitude}")
+    private fun startMap(location: Location?, isNewMap: Boolean, Map: UserMap){
+        // If newMap==true, then location, map title need to be passed
+        // if newMap is false, then need to pass in title, places
         val intent = Intent(this, NewMaps::class.java)
-        intent.putExtra(LOCATION_KEY, location)
-        intent.putExtra(NEW_MAP_TITLE, mapTitle)
+        when (isNewMap){
+            true -> {
+                intent.putExtra(LOCATION_KEY, location)
+                intent.putExtra(USER_MAP_KEY, Map)
+            }
+            false -> {
+                intent.putExtra(USER_MAP_KEY, Map)
+            }
+        }
+
+        // Will navigate to map activity either with default coordinates, or current coordinates.
+        //Log.i(TAG, "StartMap: ${location.latitude}, ${location.longitude}")
+        Log.i(TAG, "startMap: Starting Map: ${Map.title}, there is ${Map.places.size} places")
         editActivityResultLauncher.launch(intent)
         //activityTransition()
     }

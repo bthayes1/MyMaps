@@ -42,12 +42,14 @@ class MapsAdapter(
         val item = data[position]
         holder.bind(item)
         holder.itemFrame.setOnClickListener {
+            Log.i(TAG, "Item selected: $position")
             onClickListener.itemClickListener(position)
         }
         holder.btnEdit.setOnClickListener {
             editClickListener.editClickListener(position)
         }
         holder.btnDelete.setOnClickListener {
+            Log.i(TAG, "Item deleted: $position")
             deleteClickListener.deleteClickListener(position)
         }
 

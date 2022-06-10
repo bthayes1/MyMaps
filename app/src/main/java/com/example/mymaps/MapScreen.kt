@@ -28,7 +28,7 @@ class MapScreen : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityMapScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        myMap = intent.getSerializableExtra(MAP_LOCATION) as UserMap
+        myMap = intent.getSerializableExtra(USER_MAP_KEY) as UserMap
         supportActionBar?.title = myMap.title
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
