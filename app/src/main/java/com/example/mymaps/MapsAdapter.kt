@@ -55,6 +55,7 @@ class MapsAdapter(
 
     }
 
+
     override fun getItemCount() = data.size
 
     inner class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView) {

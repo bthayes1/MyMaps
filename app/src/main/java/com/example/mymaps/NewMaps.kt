@@ -48,6 +48,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityNewMapsBinding
     private lateinit var userMap : UserMap
     private lateinit var location : Location
+    private var isNewMap : Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +58,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
         userMap = intent.getSerializableExtra(USER_MAP_KEY) as UserMap
         if (userMap.places.isEmpty()) {
             location = intent.getParcelableExtra(LOCATION_KEY)!!
+            isNewMap = true
         }
         supportActionBar?.title = userMap.title
 
@@ -177,6 +179,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(this, "No data has been added", Toast.LENGTH_SHORT).show()
                 return true
             }
+            Log.i(TAG, "isNewMap: $isNewMap")
             val places = markers.map{marker -> Place(marker.title.toString(),
                 marker.snippet.toString(),
                 marker.position.latitude,
@@ -184,6 +187,7 @@ class NewMaps : AppCompatActivity(), OnMapReadyCallback {
 
             val newMap = UserMap(userMap.title, places)
             val intent = Intent()
+            intent.putExtra(IS_NEW_MAP, isNewMap)
             intent.putExtra(REQUEST_CODE, newMap)
             // Activity finished ok, return the data
             Log.i(TAG, "New Map saved: ${newMap.title}")

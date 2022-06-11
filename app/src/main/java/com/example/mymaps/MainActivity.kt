@@ -69,8 +69,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         supportActionBar?.displayOptions = androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM
         supportActionBar?.setCustomView(R.layout.custom_toolbar)
-        //Upon startup, maps from data file are read
-        data = deSerializeUserMaps(this).toMutableList()
+
+        data = deSerializeUserMaps(this).toMutableList() //Upon startup, maps from data file are read
+
 
         initViews()
         
@@ -111,10 +112,27 @@ class MainActivity : AppCompatActivity() {
                 // Get the data passed from EditActivity
                 if (results != null) {
                     val newMap = results.extras!!.getSerializable(REQUEST_CODE) as UserMap
-                    Log.i(TAG, "${newMap.title}, ${newMap.places[0].name}")
-                    data.add(newMap)
-                    Log.i(TAG, "Data Size: ${data.size}")
-                    adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
+                    val isNewMap = results.extras!!.getBoolean(IS_NEW_MAP)
+                    when(isNewMap){
+                        true -> {
+                            Log.i(TAG, "New map added")
+                            data.add(newMap)
+                            adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
+                        }
+                        false -> {
+                            Log.i(TAG, "New place added to old map")
+                            val position : Int
+                            for (map in data){   // Iterate through list to find current map
+                                if (map.title == newMap.title){
+                                    position = data.indexOf(map)
+                                    data[position] = newMap
+                                    adapter.notifyItemChanged(position)
+                                    break
+                                }
+                            }
+
+                        }
+                    }
                     serializeUserMaps(this, data) //save new data to file
                 }
             }
@@ -196,7 +214,12 @@ class MainActivity : AppCompatActivity() {
         btnNegative.setTextColor(ContextCompat.getColor(this, R.color.textcolor))
         btnPositive.setOnClickListener {
             mapTitle = newMapTitle.findViewById<EditText>(R.id.etMapName).text.toString()
-            if (mapTitle.trim().isNotEmpty()) {
+            val mapTitles = mutableListOf<String>()
+            for (map in data){ //Make a list of all current map titles
+                mapTitles.add(map.title)
+            }
+            Log.i(TAG, "Maptitle: $mapTitles")
+            if (mapTitle.trim().isNotEmpty() && !mapTitles.contains(mapTitle)) {
                 when (isEdit){
                     true -> {
                         data[position] = UserMap(mapTitle, data[position].places)
@@ -206,18 +229,22 @@ class MainActivity : AppCompatActivity() {
                     else -> requestPermission()
                 }
                 dialog.dismiss()
-            } else {
+            }
+            else if (mapTitles.contains(mapTitle)){
+                Toast.makeText(this, "Can not duplicate titles", Toast.LENGTH_SHORT).show()
+            }
+            else {
                 Toast.makeText(this, "Title is Required", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
     /** The request permission launcher is used to prompt the user to make their
      * choice on allowing permission. The @suppressLint exists because the
      * fusedLocationClient does not have its expected permissions added. This
      * is handled by the (isGranted) check, because the program will never call fusedLocationClient
      * w/o checking if location permissions have been granted
      */
-
     @SuppressLint("MissingPermission")
     private val requestPermissionLauncher =
         registerForActivityResult(
