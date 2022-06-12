@@ -7,14 +7,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
     <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/rvLocations"
-        />
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreateMap"
@@ -22,45 +23,25 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="56dp"
+        android:backgroundTint="@color/light"
         android:clickable="true"
         android:contentDescription="@string/button_to_add_map"
         android:focusable="true"
-        android:foregroundTint="#FFFFFF"
-        android:tint="@color/white"
+        app:backgroundTint="#00C33636"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@android:drawable/ic_input_add"
-        />
+        app:tint="@color/fabOutline" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabDelete"
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/swDisplayToggle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="32dp"
-        android:backgroundTint="#F44336"
-        android:clickable="true"
-        android:contentDescription="@string/delete_map"
-        android:focusable="true"
-        android:foregroundTint="#FFFFFF"
-        android:tint="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@android:drawable/ic_menu_delete"
-        android:visibility="gone"/>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabEdit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginBottom="32dp"
-        android:clickable="true"
-        android:contentDescription="@string/edit_map"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@android:drawable/ic_menu_edit"
-        android:focusable="true"
-        android:visibility="gone"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="20dp"
+        android:text="Night Mode?"
+        tools:layout_editor_absoluteX="42dp"
+        tools:layout_editor_absoluteY="600dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

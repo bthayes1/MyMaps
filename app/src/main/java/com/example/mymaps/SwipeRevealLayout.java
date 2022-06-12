@@ -22,7 +22,8 @@ import androidx.core.view.ViewCompat;
 import androidx.customview.widget.ViewDragHelper;
 
 /**
- * Created by Mark O'Sullivan on 25th February 2018.
+ * Code used from https://github.com/MarkOSullivan94/SwipeRevealLayoutExample repository
+ * under an MIT license. Changes made were to add a bounce back feature after 3 seconds.
  */
 
 @SuppressLint("RtlHardcoded")

@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -18,6 +17,8 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SwitchCompat
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -31,11 +32,13 @@ import com.google.android.material.snackbar.Snackbar
 import java.io.*
 
 // Key values for data being passed from parent to child
-const val MAP_LOCATION = "map location"
+const val USER_MAP_KEY = "map location"
 const val NEW_MAP_TITLE = "new title"
 const val REQUEST_CODE = "new map"
+const val IS_NEW_MAP = "isNewMap"
 
 const val LOCATION_KEY = "location" // Key for extras passed into MapActivity.kt
+
 // Default location if location permission is denied.
 private const val DEFAULT_LOCATION_PROVIDER = "default"
 private const val DEFAULT_LATITUDE = 45.0
@@ -48,6 +51,7 @@ private const val FILENAME = "usermaps.data"
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var swToggle: SwitchCompat
     private lateinit var editActivityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mapTitle : String
@@ -59,14 +63,30 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    @SuppressLint("UseSupportActionBar")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //Upon startup, maps from data file are read
-        data = deSerializeUserMaps(this).toMutableList()
+        supportActionBar?.displayOptions = androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM
+        supportActionBar?.setCustomView(R.layout.custom_toolbar)
+
+        data = deSerializeUserMaps(this).toMutableList() //Upon startup, maps from data file are read
+
 
         initViews()
-
+        
+        swToggle.setOnClickListener{
+            when(swToggle.isChecked){
+                true -> {
+                    Log.i(TAG, "Night mode on")
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                }
+                false -> {
+                    Log.i(TAG, "Night mode off")
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                }
+            }
+        }
         rvMaps.layoutManager = LinearLayoutManager(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setupAdapter()
@@ -78,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         fabNewMap = findViewById(R.id.fabCreateMap)
         rvMaps = findViewById(R.id.rvLocations)
         constraintLayout = findViewById(R.id.constraintLayout)
+        swToggle = findViewById(R.id.swDisplayToggle)
     }
 
     private fun newMapsLauncher() {
@@ -91,9 +112,27 @@ class MainActivity : AppCompatActivity() {
                 // Get the data passed from EditActivity
                 if (results != null) {
                     val newMap = results.extras!!.getSerializable(REQUEST_CODE) as UserMap
-                    Log.i(TAG, "${newMap.title}, ${newMap.places[0].name}")
-                    data.add(newMap)
-                    adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
+                    val isNewMap = results.extras!!.getBoolean(IS_NEW_MAP)
+                    when(isNewMap){
+                        true -> {
+                            Log.i(TAG, "New map added")
+                            data.add(newMap)
+                            adapter.notifyItemInserted(data.size - 1) // add new UserMap to rvMaps
+                        }
+                        false -> {
+                            Log.i(TAG, "New place added to old map")
+                            val position : Int
+                            for (map in data){   // Iterate through list to find current map
+                                if (map.title == newMap.title){
+                                    position = data.indexOf(map)
+                                    data[position] = newMap
+                                    adapter.notifyItemChanged(position)
+                                    break
+                                }
+                            }
+
+                        }
+                    }
                     serializeUserMaps(this, data) //save new data to file
                 }
             }
@@ -101,41 +140,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupAdapter() {
-        adapter = MapsAdapter(this, data, object : MapsAdapter.OnItemClick {
+        adapter = MapsAdapter(this, data,
+            object : MapsAdapter.OnItemClick {
             //When rvMaps item is clicked, opens user map in MapScreen activity
             override fun itemClickListener(position: Int) {
-                val i = Intent(this@MainActivity, MapScreen::class.java)
-                i.putExtra(MAP_LOCATION, data[position])
-                startActivity(i)
+                startMap(null, false, data[position])
             }
-        }, object : MapsAdapter.OnEditClick {
+        },
+            object : MapsAdapter.OnEditClick {
             override fun editClickListener(position: Int) {
-                Log.i(TAG, "Edit Clicked")
                 dialogWindow(true, position)
             }
-        }, object : MapsAdapter.OnDeleteClick{
+        },
+            object : MapsAdapter.OnDeleteClick{
             override fun deleteClickListener(position: Int) {
                 deleteMap(position)
-                // Need to persist data and add undo function
             }
         })
         rvMaps.adapter = adapter
     }
 
     private fun deleteMap(position: Int) {
-        // delete data
         val deletedData = data[position] // saves the data that is deleted in variable
         data.removeAt(position)
         adapter.notifyItemRemoved(position)
+        adapter.notifyItemRangeChanged(position,data.size)
         serializeUserMaps(this, data)
-        // Create snackbar to allow user to restore data
+         //Create snackbar to allow user to restore data
         Snackbar.make(constraintLayout, "Item was deleted", Snackbar.LENGTH_LONG)
             .setAction("Undo") {
                 data.add(position, deletedData)
                 adapter.notifyItemInserted(position)
-                Log.i(TAG, "onClick: Undo was pressed. Data was added at position: $position")
+                adapter.notifyItemRangeChanged(position,data.size-1)
+                serializeUserMaps(this, data)
             }
-            .setActionTextColor(Color.WHITE)
             .show()
     }
 
@@ -170,11 +208,18 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Ok", null)
             .setNegativeButton("Cancel", null)
             .show()
-        Log.i(TAG, "Here")
-
-        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+        val btnPositive = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+        val btnNegative = dialog.getButton(DialogInterface.BUTTON_NEGATIVE)
+        btnPositive.setTextColor(ContextCompat.getColor(this, R.color.textcolor))
+        btnNegative.setTextColor(ContextCompat.getColor(this, R.color.textcolor))
+        btnPositive.setOnClickListener {
             mapTitle = newMapTitle.findViewById<EditText>(R.id.etMapName).text.toString()
-            if (mapTitle.trim().isNotEmpty()) {
+            val mapTitles = mutableListOf<String>()
+            for (map in data){ //Make a list of all current map titles
+                mapTitles.add(map.title)
+            }
+            Log.i(TAG, "Maptitle: $mapTitles")
+            if (mapTitle.trim().isNotEmpty() && !mapTitles.contains(mapTitle)) {
                 when (isEdit){
                     true -> {
                         data[position] = UserMap(mapTitle, data[position].places)
@@ -184,20 +229,22 @@ class MainActivity : AppCompatActivity() {
                     else -> requestPermission()
                 }
                 dialog.dismiss()
-//                requestPermission()
-
-            } else {
+            }
+            else if (mapTitles.contains(mapTitle)){
+                Toast.makeText(this, "Can not duplicate titles", Toast.LENGTH_SHORT).show()
+            }
+            else {
                 Toast.makeText(this, "Title is Required", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
     /** The request permission launcher is used to prompt the user to make their
      * choice on allowing permission. The @suppressLint exists because the
      * fusedLocationClient does not have its expected permissions added. This
      * is handled by the (isGranted) check, because the program will never call fusedLocationClient
      * w/o checking if location permissions have been granted
      */
-
     @SuppressLint("MissingPermission")
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -211,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                             Toast.makeText(this, "Location not Found", Toast.LENGTH_SHORT).show()
                         }
                         else -> {
-                            startMap(location.result)
+                            startMap(location.result, true, UserMap(mapTitle, emptyList()))
                         }
                     }
                 }
@@ -221,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                 val defaultLoc = Location(DEFAULT_LOCATION_PROVIDER)
                 defaultLoc.latitude = DEFAULT_LATITUDE
                 defaultLoc.longitude = DEFAULT_LONGITUDE
-                startMap(defaultLoc)
+                startMap(defaultLoc, true, UserMap(mapTitle, emptyList()))
             }
         }
 
@@ -269,13 +316,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startMap(location: Location){
-        // Will navigate to map activity either with default coordinates, or current coordinates.
-        Log.i(TAG, "StartMap: ${location.latitude}, ${location.longitude}")
+    private fun startMap(location: Location?, isNewMap: Boolean, Map: UserMap){
+        // If newMap==true, then location, map title need to be passed
+        // if newMap is false, then need to pass in title, places
         val intent = Intent(this, NewMaps::class.java)
-        intent.putExtra(LOCATION_KEY, location)
-        intent.putExtra(NEW_MAP_TITLE, mapTitle)
+        when (isNewMap){
+            true -> {
+                intent.putExtra(LOCATION_KEY, location)
+                intent.putExtra(USER_MAP_KEY, Map)
+            }
+            false -> {
+                intent.putExtra(USER_MAP_KEY, Map)
+            }
+        }
+
+        // Will navigate to map activity either with default coordinates, or current coordinates.
+        //Log.i(TAG, "StartMap: ${location.latitude}, ${location.longitude}")
+        Log.i(TAG, "startMap: Starting Map: ${Map.title}, there is ${Map.places.size} places")
         editActivityResultLauncher.launch(intent)
+        //activityTransition()
+    }
+
+    private fun activityTransition(){
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }
 
 }
